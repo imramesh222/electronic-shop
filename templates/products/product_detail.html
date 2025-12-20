@@ -1,0 +1,72 @@
+<!-- templates/products/product_detail.html -->
+{% extends 'base.html' %}
+
+{% block title %}{{ product.name }} - Electronic Shop{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6">
+        <img src="{{ product.image.url|default:'/static/images/placeholder.png' }}" 
+             class="img-fluid rounded" alt="{{ product.name }}">
+    </div>
+    <div class="col-md-6">
+        <h1>{{ product.name }}</h1>
+        <p class="text-muted">Category: <a href="{{ product.category.get_absolute_url }}">{{ product.category.name }}</a></p>
+        <h3 class="text-primary">${{ product.price }}</h3>
+        
+        {% if product.available %}
+            <p class="text-success">In Stock</p>
+        {% else %}
+            <p class="text-danger">Out of Stock</p>
+        {% endif %}
+        
+        <p>{{ product.description|linebreaks }}</p>
+        
+        <form action="{% url 'cart:cart_add' product.id %}" method="post" class="mb-4">
+            {% csrf_token %}
+            <div class="row g-3 align-items-center">
+                <div class="col-auto">
+                    <label for="quantity" class="col-form-label">Quantity:</label>
+                </div>
+                <div class="col-auto">
+                    <input type="number" id="quantity" name="quantity" value="1" min="1" max="{{ product.stock }}" 
+                           class="form-control" style="width: 80px;">
+                </div>
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-primary" {% if not product.available %}disabled{% endif %}>
+                        <i class="fas fa-shopping-cart"></i> Add to Cart
+                    </button>
+                </div>
+            </div>
+        </form>
+        
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Product Details</h5>
+            </div>
+            <div class="card-body">
+                <table class="table">
+                    <tbody>
+                        <tr>
+                            <th>Brand</th>
+                            <td>{{ product.brand|default:"N/A" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Model</th>
+                            <td>{{ product.model|default:"N/A" }}</td>
+                        </tr>
+                        <tr>
+                            <th>SKU</th>
+                            <td>{{ product.sku|default:"N/A" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Stock</th>
+                            <td>{{ product.stock }} units</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

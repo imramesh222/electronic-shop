@@ -1,0 +1,368 @@
+<!-- templates/orders/order_detail.html -->
+{% extends 'base.html' %}
+
+{% block title %}Order #{{ order.id }} - Electronic Shop{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">Order #{{ order.id }}</h4>
+                <span class="badge 
+                    {% if order.status == 'completed' %}bg-success
+                    {% elif order.status == 'cancelled' %}bg-danger
+                    {% else %}bg-warning{% endif %}">
+                    {{ order.get_status_display }}
+                </span>
+            </div>
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h6>Order Placed</h6>
+                        <p class="mb-0">{{ order.created_at|date:"F d, Y" }}</p>
+                    </div>
+                    <div class="col-md-6 text-md-end">
+                        <h6>Order Total</h6>
+                        <p class="mb-0 h5">${{ order.total_price|floatformat:2 }}</p>
+                    </div>
+                </div>
+                
+                <h5 class="mb-3">Order Items</h5>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Quantity</th>
+                                <th class="text-end">Price</th>
+                                <th class="text-end">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in order.items.all %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <img src="{{ item.product.image.url|default:'/static/images/placeholder.svg' }}" 
+                                                 class="img-thumbnail me-3" style="width: 60px; height: 60px; object-fit: contain;" 
+                                                 alt="{{ item.product.name }}">
+                                            <div>
+                                                <h6 class="mb-0">{{ item.product.name }}</h6>
+                                                <small class="text-muted">{{ item.product.category.name }}</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>{{ item.quantity }}</td>
+                                    <td class="text-end">${{ item.price|floatformat:2 }}</td>
+                                    <td class="text-end">${{ item.total_price|floatformat:2 }}</td>
+                                </tr>
+                            {% endfor %}
+                            <tr>
+                                <td colspan="3" class="text-end">Subtotal:</td>
+                                <td class="text-end">${{ order.subtotal|floatformat:2 }}</td>
+                            </tr>
+                            <tr>
+                                <td colspan="3" class="text-end">Shipping:</td>
+                                <td class="text-end">
+                                    {% if order.shipping_cost > 0 %}
+                                        ${{ order.shipping_cost|floatformat:2 }}
+                                    {% else %}
+                                        Free
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="3" class="text-end">Tax ({{ order.tax_rate|floatformat:0 }}%):</td>
+                                <td class="text-end">${{ order.tax|floatformat:2 }}</td>
+                            </tr>
+                            <tr>
+                                <td colspan="3" class="text-end"><strong>Total:</strong></td>
+                                <td class="text-end"><strong>${{ order.total_price|floatformat:2 }}</strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                {% if order.notes %}
+                <div class="mt-4">
+                    <h6>Order Notes</h6>
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            {{ order.notes|linebreaks }}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Shipping Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Shipping Address</h6>
+                        <address>
+                            {{ order.shipping_address.first_name }} {{ order.shipping_address.last_name }}<br>
+                            {{ order.shipping_address.address }}<br>
+                            {{ order.shipping_address.city }}, {{ order.shipping_address.state }} {{ order.shipping_address.zip_code }}<br>
+                            {{ order.shipping_address.country }}
+                        </address>
+                        {% if order.tracking_number %}
+                        <div class="mt-3">
+                            <h6>Tracking Information</h6>
+                            <p class="mb-1">Tracking Number: <strong>{{ order.tracking_number }}</strong></p>
+                            {% if order.tracking_url %}
+                            <a href="{{ order.tracking_url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-truck me-1"></i> Track Package
+                            </a>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Contact Information</h6>
+                        <p class="mb-1">
+                            <i class="fas fa-envelope me-2"></i> {{ order.email }}
+                        </p>
+                        {% if order.phone %}
+                        <p class="mb-0">
+                            <i class="fas fa-phone me-2"></i> {{ order.phone }}
+                        </p>
+                        {% endif %}
+
+                        {% if order.status == 'processing' %}
+                        <div class="mt-4">
+                            <div class="progress" style="height: 10px;">
+                                <div class="progress-bar" role="progressbar" style="width: 25%;" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                            <div class="d-flex justify-content-between mt-2">
+                                <small>Order Placed</small>
+                                <small>Shipped</small>
+                                <small>In Transit</small>
+                                <small>Delivered</small>
+                            </div>
+                        </div>
+                        {% elif order.status == 'shipped' %}
+                        <div class="mt-4">
+                            <div class="progress" style="height: 10px;">
+                                <div class="progress-bar" role="progressbar" style="width: 50%;" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                            <div class="d-flex justify-content-between mt-2">
+                                <small>Order Placed</small>
+                                <small>Shipped</small>
+                                <small>In Transit</small>
+                                <small>Delivered</small>
+                            </div>
+                        </div>
+                        {% elif order.status == 'delivered' %}
+                        <div class="mt-4">
+                            <div class="progress" style="height: 10px;">
+                                <div class="progress-bar bg-success" role="progressbar" style="width: 100%;" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                            <div class="d-flex justify-content-between mt-2">
+                                <small>Order Placed</small>
+                                <small>Shipped</small>
+                                <small>In Transit</small>
+                                <small>Delivered</small>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Payment Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Payment Method</h6>
+                        <p class="mb-1">{{ order.payment.get_payment_method_display }}</p>
+                        <small class="text-muted">Transaction ID: {{ order.payment.transaction_id }}</small>
+                        
+                        {% if order.payment.payment_method == 'credit_card' and order.payment.card_last4 %}
+                        <div class="mt-3">
+                            <h6>Card Details</h6>
+                            <p class="mb-1">
+                                <i class="far fa-credit-card me-2"></i> 
+                                **** **** **** {{ order.payment.card_last4 }}
+                            </p>
+                            <small class="text-muted">
+                                Expires {{ order.payment.card_exp_month }}/{{ order.payment.card_exp_year }}
+                            </small>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Billing Address</h6>
+                        <address class="mb-0">
+                            {{ order.billing_address.first_name }} {{ order.billing_address.last_name }}<br>
+                            {{ order.billing_address.address }}<br>
+                            {{ order.billing_address.city }}, {{ order.billing_address.state }} {{ order.billing_address.zip_code }}<br>
+                            {{ order.billing_address.country }}
+                        </address>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Order Actions</h5>
+            </div>
+            <div class="card-body">
+                {% if order.status == 'processing' %}
+                <button class="btn btn-outline-danger btn-sm w-100 mb-2" data-bs-toggle="modal" data-bs-target="#cancelOrderModal">
+                    <i class="fas fa-times me-1"></i> Cancel Order
+                </button>
+                {% endif %}
+                
+                {% if order.status == 'delivered' and not order.return_requested %}
+                <button class="btn btn-outline-secondary btn-sm w-100 mb-2" data-bs-toggle="modal" data-bs-target="#returnOrderModal">
+                    <i class="fas fa-undo me-1"></i> Request Return
+                </button>
+                {% endif %}
+                
+                <a href="{% url 'orders:invoice' order.id %}" class="btn btn-outline-primary btn-sm w-100 mb-2" target="_blank">
+                    <i class="fas fa-file-invoice me-1"></i> View Invoice
+                </a>
+                
+                <a href="{% url 'products:product_list' %}" class="btn btn-primary btn-sm w-100">
+                    <i class="fas fa-shopping-bag me-1"></i> Continue Shopping
+                </a>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Need Help?</h5>
+            </div>
+            <div class="card-body">
+                <p class="card-text">If you have any questions about your order, please contact our customer service team.</p>
+                <a href="{% url 'contact' %}" class="btn btn-outline-primary btn-sm w-100">
+                    <i class="fas fa-headset me-1"></i> Contact Support
+                </a>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Order Summary</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Subtotal:</span>
+                    <span>${{ order.subtotal|floatformat:2 }}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Shipping:</span>
+                    <span>{% if order.shipping_cost > 0 %}${{ order.shipping_cost|floatformat:2 }}{% else %}Free{% endif %}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Tax ({{ order.tax_rate|floatformat:0 }}%):</span>
+                    <span>${{ order.tax|floatformat:2 }}</span>
+                </div>
+                <hr>
+                <div class="d-flex justify-content-between fw-bold">
+                    <span>Total:</span>
+                    <span>${{ order.total_price|floatformat:2 }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Cancel Order Modal -->
+<div class="modal fade" id="cancelOrderModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Cancel Order</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to cancel this order?</p>
+                <p class="text-muted small">This action cannot be undone. A refund will be processed if applicable.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <form action="{% url 'orders:order_cancel' order.id %}" method="post" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Yes, Cancel Order</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Return Order Modal -->
+<div class="modal fade" id="returnOrderModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Request Return</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{% url 'orders:order_return' order.id %}" method="post">
+                <div class="modal-body">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="returnReason" class="form-label">Reason for return</label>
+                        <select class="form-select" id="returnReason" name="reason" required>
+                            <option value="" selected disabled>Select a reason</option>
+                            <option value="wrong_item">Wrong item received</option>
+                            <option value="defective">Item is defective or damaged</option>
+                            <option value="not_as_described">Item not as described</option>
+                            <option value="no_longer_needed">No longer needed</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="returnNotes" class="form-label">Additional notes (optional)</label>
+                        <textarea class="form-control" id="returnNotes" name="notes" rows="3"></textarea>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="returnPolicy" required>
+                        <label class="form-check-label" for="returnPolicy">
+                            I have read and agree to the <a href="{% url 'return_policy' %}" target="_blank">return policy</a>
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Submit Return Request</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Enable tooltips
+var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+    return new bootstrap.Tooltip(tooltipTriggerEl);
+});
+
+// Handle return reason change
+document.getElementById('returnReason')?.addEventListener('change', function() {
+    const notesField = document.getElementById('returnNotes');
+    if (this.value === 'other') {
+        notesField.required = true;
+    } else {
+        notesField.required = false;
+    }
+});
+</script>
+{% endblock %}

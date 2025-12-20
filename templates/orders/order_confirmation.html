@@ -1,0 +1,52 @@
+<!-- templates/orders/order_confirmation.html -->
+{% extends 'base.html' %}
+
+{% block title %}Order Confirmation - Electronic Shop{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-success">
+                <div class="card-header bg-success text-white">
+                    <h2 class="mb-0">Order Confirmed!</h2>
+                </div>
+                <div class="card-body text-center py-5">
+                    <div class="mb-4">
+                        <i class="fas fa-check-circle text-success" style="font-size: 5rem;"></i>
+                    </div>
+                    <h3 class="mb-3">Thank you for your order!</h3>
+                    <p class="lead">Your order has been received and is being processed.</p>
+                    <p>Order Number: <strong>#{{ order.id }}</strong></p>
+                    <p>We've sent a confirmation email to <strong>{{ order.email }}</strong></p>
+                    
+                    <div class="mt-5">
+                        <a href="{% url 'orders:order_detail' order.id %}" class="btn btn-primary me-2">
+                            <i class="fas fa-box me-2"></i>View Order Details
+                        </a>
+                        <a href="{% url 'products:product_list' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-shopping-bag me-2"></i>Continue Shopping
+                        </a>
+                    </div>
+                </div>
+                <div class="card-footer bg-light">
+                    <div class="row text-center">
+                        <div class="col-md-4 mb-3 mb-md-0">
+                            <div class="text-muted mb-2">Order Date</div>
+                            <div>{{ order.created_at|date:"F j, Y" }}</div>
+                        </div>
+                        <div class="col-md-4 mb-3 mb-md-0">
+                            <div class="text-muted mb-2">Total Amount</div>
+                            <div class="h5 mb-0">${{ order.total_price|floatformat:2 }}</div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-muted mb-2">Payment Method</div>
+                            <div>{{ order.payment.get_payment_method_display }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
