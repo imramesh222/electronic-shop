@@ -1,109 +1,37 @@
 <!-- templates/products/product_list.html -->
 {% extends 'base.html' %}
-
-{% block title %}Products - Electronic Shop{% endblock %}
+{% load static %}
 
 {% block content %}
-<div class="row mb-4">
-    <div class="col-md-6">
-        <h1>Our Products</h1>
-    </div>
-    <div class="col-md-6">
-        <form class="d-flex" method="get" action="{% url 'products:product_list' %}">
-            <input class="form-control me-2" type="search" name="q" placeholder="Search products..." value="{{ request.GET.q }}">
-            <button class="btn btn-outline-primary" type="submit">Search</button>
-        </form>
-    </div>
-</div>
-
-<div class="row">
-    <div class="col-md-3">
-        <div class="card mb-4">
-            <div class="card-header">
-                <h5 class="mb-0">Categories</h5>
-            </div>
-            <div class="list-group list-group-flush">
-                <a href="{% url 'products:product_list' %}" 
-                   class="list-group-item list-group-item-action {% if not category_slug %}active{% endif %}">
-                    All Categories
-                </a>
-                {% for category in categories %}
-                    <a href="{{ category.get_absolute_url }}" 
-                       class="list-group-item list-group-item-action {% if category.slug == category_slug %}active{% endif %}">
-                        {{ category.name }}
-                    </a>
-                {% endfor %}
-            </div>
-        </div>
-    </div>
-    <div class="col-md-9">
-        <div class="row row-cols-1 row-cols-md-3 g-4">
-            {% for product in products %}
-                <div class="col">
-                    <div class="card h-100">
-                        <img src="{{ product.image.url|default:'/static/images/placeholder.png' }}" 
-                             class="card-img-top" alt="{{ product.name }}" style="height: 200px; object-fit: contain;">
-                        <div class="card-body">
-                            <h5 class="card-title">{{ product.name }}</h5>
-                            <p class="card-text text-muted">{{ product.category.name }}</p>
-                            <p class="card-text">${{ product.price }}</p>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <a href="{{ product.get_absolute_url }}" class="btn btn-sm btn-outline-primary">View Details</a>
-                                <form action="{% url 'cart:cart_add' product.id %}" method="post" class="d-inline">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="quantity" value="1">
-                                    <button type="submit" class="btn btn-sm btn-primary">Add to Cart</button>
-                                </form>
-                            </div>
-                        </div>
+<div class="container py-5">
+    <div class="row">
+        {% for product in products %}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                {% if product.image %}
+                    <img src="{{ product.image.url }}" 
+                         class="card-img-top" 
+                         alt="{{ product.name }}" 
+                         style="height: 200px; width: 100%; object-fit: contain; padding: 10px;">
+                {% else %}
+                    <div class="text-center py-5 bg-light" style="height: 200px; display: flex; flex-direction: column; justify-content: center;">
+                        <i class="fas fa-image fa-3x text-muted mb-2"></i>
+                        <span class="text-muted">No image available</span>
                     </div>
+                {% endif %}
+                <div class="card-body">
+                    <h5 class="card-title">{{ product.name }}</h5>
+                    <p class="card-text">{{ product.description|truncatewords:20|default:"No description available" }}</p>
+                    <p class="card-text"><strong>${{ product.price|floatformat:2 }}</strong></p>
+                    <a href="{% url 'products:product_detail' slug=product.slug %}" class="btn btn-primary">View Details</a>
                 </div>
-            {% empty %}
-                <div class="col-12">
-                    <div class="alert alert-info">No products found.</div>
-                </div>
-            {% endfor %}
+            </div>
         </div>
-        
-        {% if is_paginated %}
-            <nav aria-label="Page navigation" class="mt-4">
-                <ul class="pagination justify-content-center">
-                    {% if page_obj.has_previous %}
-                        <li class="page-item">
-                            <a class="page-link" href="?page=1" aria-label="First">
-                                <span aria-hidden="true">&laquo;&laquo;</span>
-                            </a>
-                        </li>
-                        <li class="page-item">
-                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="Previous">
-                                <span aria-hidden="true">&laquo;</span>
-                            </a>
-                        </li>
-                    {% endif %}
-                    
-                    {% for num in page_obj.paginator.page_range %}
-                        {% if page_obj.number == num %}
-                            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
-                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-                            <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
-                        {% endif %}
-                    {% endfor %}
-                    
-                    {% if page_obj.has_next %}
-                        <li class="page-item">
-                            <a class="page-link" href="?page={{ page_obj.next_page_number }}" aria-label="Next">
-                                <span aria-hidden="true">&raquo;</span>
-                            </a>
-                        </li>
-                        <li class="page-item">
-                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}" aria-label="Last">
-                                <span aria-hidden="true">&raquo;&raquo;</span>
-                            </a>
-                        </li>
-                    {% endif %}
-                </ul>
-            </nav>
-        {% endif %}
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info">No products available.</div>
+        </div>
+        {% endfor %}
     </div>
 </div>
 {% endblock %}

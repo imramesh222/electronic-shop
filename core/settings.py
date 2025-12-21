@@ -163,16 +163,16 @@ USE_I18N = True
 
 USE_TZ = True
 
+# core/settings.py
 
-# Static files (CSS, JavaScript, Images)
+# Add these at the bottom of the file
+MEDIA_URL = '/media/'  # Different from STATIC_URL
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# Make sure STATIC_URL is different
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'static'),
-]
-# Media files
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field

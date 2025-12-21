@@ -136,3 +136,18 @@ def cart_remove(request, product_id):
     cart.remove(product)
     messages.success(request, f"Removed {product.name} from your cart")
     return redirect('cart:cart_detail')
+
+
+
+# products/views.py
+from django.views.generic import ListView
+from .models import Product
+
+class ProductListView(ListView):
+    model = Product
+    template_name = 'products/product_list.html'
+    context_object_name = 'products'
+    paginate_by = 12
+
+    def get_queryset(self):
+        return Product.objects.filter(is_active=True).select_related('category')

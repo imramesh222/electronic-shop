@@ -34,10 +34,12 @@ class Product(models.Model):
         decimal_places=2,
         validators=[MinValueValidator(0)]
     )
+    image = models.ImageField(upload_to='products/', blank=True, null=True)
     stock = models.PositiveIntegerField(_('stock'))
     available = models.BooleanField(_('available'), default=True)
     created_at = models.DateTimeField(_('created at'), auto_now_add=True)
     updated_at = models.DateTimeField(_('updated at'), auto_now=True)
+
 
     class Meta:
         ordering = ('name',)
