@@ -163,3 +163,10 @@ class CategoryListView(ListView):
     model = Category
     template_name = 'products/category_list.html'
     context_object_name = 'categories'
+
+
+# products/views.py
+from django.views.generic import ListView
+from .models import Product
+
+

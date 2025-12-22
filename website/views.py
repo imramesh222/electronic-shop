@@ -22,3 +22,12 @@ class HomeView(LoginRequiredMixin, TemplateView):
         if not request.user.is_authenticated:
             messages.info(request, 'Please log in to access the home page.')
         return super().dispatch(request, *args, **kwargs)
+
+
+class ContactView(TemplateView):
+    template_name = 'website/contact.html'
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx.setdefault('page_title', 'Contact Us')
+        return ctx

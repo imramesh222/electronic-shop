@@ -7,12 +7,12 @@ from django.conf.urls.static import static
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    path('api/accounts/', include('accounts.urls')),
-    path('', include('website.urls')),  # Keep this at the root
+    path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('accounts/', include('accounts.urls')),
+    path('', include('website.urls')),        # ensure this line is present (no namespace)
     path('products/', include('products.urls', namespace='products')),
-    path('api/orders/', include('orders.urls', namespace='orders')),
-    path('api/cart/', include('cart.urls')),
+    path('orders/', include(('orders.urls', 'orders'), namespace='orders')),  # ensure namespace
+    path('cart/', include('cart.urls')),
 ]
 
 if settings.DEBUG:

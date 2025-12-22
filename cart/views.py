@@ -95,6 +95,8 @@ class CartViewSet(LoginRequiredToBuyMixin, viewsets.ModelViewSet):
                 status=status.HTTP_404_NOT_FOUND
             )
 
+
+
 class CartDetailView(LoginRequiredToBuyMixin, DetailView):
     model = Cart
     template_name = 'cart/cart_detail.html'
@@ -139,15 +141,21 @@ def cart_remove(request, product_id):
 
 
 
-# products/views.py
-from django.views.generic import ListView
-from .models import Product
 
-class ProductListView(ListView):
-    model = Product
-    template_name = 'products/product_list.html'
-    context_object_name = 'products'
-    paginate_by = 12
 
-    def get_queryset(self):
-        return Product.objects.filter(is_active=True).select_related('category')
+@login_required
+def cart_update(request, item_id):
+    """
+    Accepts POST with 'quantity'. If quantity <= 0, remove the item;
+    otherwise update quantity. Redirects back to cart_detail.
+    """
+    if request.method == 'POST':
+        try:
+            quantity = int(request.POST.get('quantity', 1))
+        except (TypeError, ValueError):
+            quantity = 1
+        item = get_object_or_404(CartItem, id=item_id, cart__user=request.user)
+        if quantity <= 0:
+            item.delete()
+        else:
+            item.quantity = quantity

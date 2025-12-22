@@ -1,0 +1,59 @@
+<!-- File: templates/website/contact.html -->
+<!DOCTYPE html>
+<html lang="en">
+  {% load static %}
+  {% block title %}Contact Us{% endblock %}
+
+  {% block content %}
+  <div class="container" style="max-width:900px;margin:2rem auto;padding:1rem;">
+    <h1>Contact Us</h1>
+
+    {% if messages %}
+      <div class="messages">
+        {% for message in messages %}
+          <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}" role="alert">
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <p>If you have questions or need support, send us a message or use the details below.</p>
+
+    <div style="display:flex;flex-wrap:wrap;gap:1rem;">
+      <div style="flex:1 1 320px;">
+        <h2>Contact details</h2>
+        <ul style="list-style:none;padding-left:0;">
+          <li><strong>Email:</strong> <a href="mailto:info@example.com">info@example.com</a></li>
+          <li><strong>Phone:</strong> +1 (555) 123-4567</li>
+          <li><strong>Hours:</strong> Mon–Fri, 9am–6pm</li>
+        </ul>
+      </div>
+
+      <div style="flex:1 1 320px;">
+        <h2>Send a message</h2>
+        <form method="post" action="{% url 'contact' %}">
+          {% csrf_token %}
+          <div style="margin-bottom:0.5rem;">
+            <label for="id_name">Name</label><br>
+            <input id="id_name" name="name" type="text" class="form-control" style="width:100%;" />
+          </div>
+          <div style="margin-bottom:0.5rem;">
+            <label for="id_email">Email</label><br>
+            <input id="id_email" name="email" type="email" class="form-control" style="width:100%;" />
+          </div>
+          <div style="margin-bottom:0.5rem;">
+            <label for="id_subject">Subject</label><br>
+            <input id="id_subject" name="subject" type="text" class="form-control" style="width:100%;" />
+          </div>
+          <div style="margin-bottom:0.5rem;">
+            <label for="id_message">Message</label><br>
+            <textarea id="id_message" name="message" rows="6" class="form-control" style="width:100%;"></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary">Send message</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  {% endblock %}
+</html>
