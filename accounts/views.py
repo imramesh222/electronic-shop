@@ -80,6 +80,7 @@ class ChangePasswordView(generics.UpdateAPIView):
                 status=status.HTTP_200_OK
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 class CustomLoginView(LoginView):
     template_name = 'accounts/login.html'
     redirect_authenticated_user = True
@@ -87,7 +88,8 @@ class CustomLoginView(LoginView):
     
     def get_success_url(self):
         # Get the next URL from the request parameters or use the default next_page
-        return self.request.POST.get('next', self.request.GET.get('next', self.next_page))
+        next_url = self.request.POST.get('next') or self.request.GET.get('next')
+        return next_url if next_url else reverse_lazy(self.next_page)
     
     def post(self, request, *args, **kwargs):
         # Override post method to handle email-based authentication
@@ -101,6 +103,45 @@ class CustomLoginView(LoginView):
             return redirect(self.get_success_url())
         else:
             messages.error(request, 'Invalid email or password')
+
+
             return self.render_to_response(self.get_context_data())
+
+
 class CustomLogoutView(LogoutView):
     next_page = 'website:home'
+    http_method_names = ['get', 'post', 'head', 'options']
+    
+    def dispatch(self, request, *args, **kwargs):
+        # Clear any existing messages to prevent duplicates
+        storage = messages.get_messages(request)
+        storage.used = True
+        return super().dispatch(request, *args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+        # Forward GET to the view's POST handler which performs logout and redirect.
+        return super().post(request, *args, **kwargs)
+
+
+
+from django.contrib.auth.views import PasswordResetView
+from django.urls import reverse_lazy
+
+class CustomPasswordResetView(PasswordResetView):
+    template_name = 'accounts/password_reset.html'
+    email_template_name = 'emails/password_reset_email.html'
+    subject_template_name = 'emails/password_reset_subject.txt'
+    success_url = reverse_lazy('accounts:password_reset_done')
+
+    def form_valid(self, form):
+        opts = {
+            'use_https': self.request.is_secure(),
+            'token_generator': self.token_generator,
+            'from_email': None,
+            'email_template_name': self.email_template_name,
+            'subject_template_name': self.subject_template_name,
+            'request': self.request,
+            'html_email_template_name': self.email_template_name,
+        }
+        form.save(**opts)
+        return super().form_valid(form)
