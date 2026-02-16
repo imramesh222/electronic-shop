@@ -6,6 +6,7 @@ class Category(models.Model):
     name = models.CharField(_('name'), max_length=200, db_index=True)
     slug = models.SlugField(_('slug'), max_length=200, unique=True)
     description = models.TextField(_('description'), blank=True)
+    icon = models.CharField(_('icon'), max_length=50, blank=True, default='fas fa-box')
     is_active = models.BooleanField(_('is active'), default=True)
     created_at = models.DateTimeField(_('created at'), auto_now_add=True)
     updated_at = models.DateTimeField(_('updated at'), auto_now=True)
@@ -17,6 +18,10 @@ class Category(models.Model):
 
     def __str__(self):
         return self.name
+
+    def get_absolute_url(self):
+        from django.urls import reverse
+        return reverse('products:category_detail', kwargs={'slug': self.slug})
 
 class Product(models.Model):
     category = models.ForeignKey(

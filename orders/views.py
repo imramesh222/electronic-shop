@@ -2,9 +2,11 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.views.generic import DetailView
+from django.views import View
+from django.utils import timezone
 from cart.cart import Cart  # This should be the session-based cart
 from .models import Order, OrderItem
-from django.views.generic import DetailView
 from core.mixins import LoginRequiredToBuyMixin
 
 @login_required
@@ -30,7 +32,6 @@ def checkout(request):
             order = Order.objects.create(
                 user=request.user,
                 status='processing',
-                is_paid=True,
                 total_price=cart_total,
                 shipping_address=shipping_address
             )
@@ -48,7 +49,7 @@ def checkout(request):
             cart.clear()
             
             messages.success(request, "Your order has been placed successfully!")
-            return redirect('orders:order_detail', order_id=order.id)
+            return redirect('orders:order_detail', pk=order.id)
             
         except Exception as e:
             messages.error(request, f"An error occurred: {str(e)}")
@@ -84,21 +85,21 @@ class OrderInvoiceView(LoginRequiredToBuyMixin, DetailView):
     def get_object(self):
         return get_object_or_404(Order, pk=self.kwargs.get('pk'), user=self.request.user)
 
-class OrderCancel(LoginRequiredToBuyMixin, DetailView):
-    model = Order
-    template_name = 'orders/order_cancel.html'
-    context_object_name = 'order'
+class OrderCancel(LoginRequiredToBuyMixin, View):
     login_url = 'accounts:login'
-
-    def get_object(self):
-        order = get_object_or_404(Order, pk=self.kwargs.get('order_id'), user=self.request.user)
+    
+    def post(self, request, pk):
+        order = get_object_or_404(Order, pk=pk, user=request.user)
         if order.status != 'processing':
-            messages.error(self.request, "Only processing orders can be canceled.")
+            messages.error(request, "Only processing orders can be canceled.")
             return redirect('orders:order_detail', pk=order.pk)
-        order.status = 'canceled'
+        
+        order.status = 'cancelled'
+        order.is_paid = False
+        order.updated_at = timezone.now()
         order.save()
-        messages.success(self.request, "Your order has been canceled.")
-        return order
+        messages.success(request, "Your order has been canceled.")
+        return redirect('orders:order_detail', pk=order.pk)
 
 class OrderReturn(LoginRequiredToBuyMixin, DetailView):
     model = Order

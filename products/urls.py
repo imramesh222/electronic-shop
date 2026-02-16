@@ -11,11 +11,11 @@ api_router.register(r'categories', views.CategoryViewSet, basename='category')
 api_router.register(r'products', views.ProductViewSet, basename='product')
 
 urlpatterns = [
-    # Frontend URLs
+    # Frontend URLs - specific paths first
     path('', views.ProductListView.as_view(), name='product_list'),
-    path('<slug:slug>/', views.ProductDetailView.as_view(), name='product_detail'),
     path('categories/', views.CategoryListView.as_view(), name='category_list'),
     path('categories/<slug:slug>/', views.CategoryDetailView.as_view(), name='category_detail'),
+    path('<slug:slug>/', views.ProductDetailView.as_view(), name='product_detail'),
     
     # Cart actions
     path('<slug:slug>/add-to-cart/', views.add_to_cart, name='add_to_cart'),

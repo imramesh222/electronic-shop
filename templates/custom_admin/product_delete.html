@@ -1,0 +1,65 @@
+{% extends 'custom_admin/base.html' %}
+
+{% block page_title %}Delete Product{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto">
+    <div class="bg-white rounded-lg shadow p-6">
+        <div class="text-center">
+            {% if product.image %}
+            <div class="mb-4">
+                <img src="{{ product.image.url }}" alt="{{ product.name }}" class="h-32 w-32 object-cover rounded mx-auto border">
+            </div>
+            {% endif %}
+            
+            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+                <i class="fas fa-exclamation-triangle text-red-600 text-xl"></i>
+            </div>
+            
+            <h3 class="text-lg font-medium text-gray-900 mb-2">Delete Product</h3>
+            <p class="text-sm text-gray-500 mb-4">
+                Are you sure you want to delete the product "<strong>{{ product.name }}</strong>"?
+            </p>
+            
+            <div class="bg-gray-50 rounded-md p-4 mb-6 text-left">
+                <div class="space-y-2 text-sm">
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Price:</span>
+                        <span class="font-medium">${{ product.price|floatformat:2 }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Stock:</span>
+                        <span class="font-medium">{{ product.stock }} units</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Category:</span>
+                        <span class="font-medium">{{ product.category.name }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Status:</span>
+                        <span class="font-medium">
+                            {% if product.available %}
+                                <span class="text-green-600">Available</span>
+                            {% else %}
+                                <span class="text-red-600">Unavailable</span>
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
+            <form method="POST" class="space-y-3">
+                {% csrf_token %}
+                <div class="flex space-x-3">
+                    <button type="submit" class="flex-1 bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition">
+                        <i class="fas fa-trash mr-2"></i>Delete Product
+                    </button>
+                    <a href="{% url 'custom_admin:products' %}" class="flex-1 bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 transition text-center">
+                        <i class="fas fa-times mr-2"></i>Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

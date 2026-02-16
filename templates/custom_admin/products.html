@@ -1,0 +1,271 @@
+{% extends 'custom_admin/base.html' %}
+
+{% block page_title %}Products{% endblock %}
+
+{% block content %}
+<!-- Add Product Form -->
+<div class="bg-white rounded-lg shadow p-6 mb-6">
+    <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-medium text-gray-900">Add New Product</h3>
+        <button onclick="toggleProductForm()" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition">
+            <i class="fas fa-plus mr-2"></i>Add Product
+        </button>
+    </div>
+    
+    <div id="productForm" class="hidden">
+        <form method="POST" enctype="multipart/form-data" class="space-y-4">
+            {% csrf_token %}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+                    {{ form.name }}
+                    {% if form.name.errors %}
+                        <p class="text-red-500 text-sm mt-1">{{ form.name.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Slug</label>
+                    {{ form.slug }}
+                    {% if form.slug.errors %}
+                        <p class="text-red-500 text-sm mt-1">{{ form.slug.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Category *</label>
+                    {{ form.category }}
+                    {% if form.category.errors %}
+                        <p class="text-red-500 text-sm mt-1">{{ form.category.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Image</label>
+                    {{ form.image }}
+                    {% if form.image.errors %}
+                        <p class="text-red-500 text-sm mt-1">{{ form.image.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                {{ form.description }}
+                {% if form.description.errors %}
+                    <p class="text-red-500 text-sm mt-1">{{ form.description.errors.0 }}</p>
+                {% endif %}
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Price ($) *</label>
+                    {{ form.price }}
+                    {% if form.price.errors %}
+                        <p class="text-red-500 text-sm mt-1">{{ form.price.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Stock *</label>
+                    {{ form.stock }}
+                    {% if form.stock.errors %}
+                        <p class="text-red-500 text-sm mt-1">{{ form.stock.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                <div>
+                    <label class="flex items-center mt-6">
+                        {{ form.available }}
+                        <span class="ml-2 text-sm text-gray-700">Available</span>
+                    </label>
+                    {% if form.available.errors %}
+                        <p class="text-red-500 text-sm mt-1">{{ form.available.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="flex space-x-3">
+                <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition">
+                    <i class="fas fa-save mr-2"></i>Save Product
+                </button>
+                <button type="button" onclick="toggleProductForm()" class="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 transition">
+                    <i class="fas fa-times mr-2"></i>Cancel
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="bg-white p-4 rounded-lg shadow mb-6">
+    <form method="GET" class="flex flex-wrap gap-4 items-end">
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+            <select name="category" class="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <option value="">All Categories</option>
+                {% for category in categories %}
+                    <option value="{{ category.id }}" {% if category_filter == category.id|stringformat:"s" %}selected{% endif %}>
+                        {{ category.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Search</label>
+            <input type="text" name="search" value="{{ search_query }}" placeholder="Product name, description..."
+                   class="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition">
+            <i class="fas fa-search mr-2"></i>Filter
+        </button>
+        <a href="{% url 'custom_admin:products' %}" class="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 transition">
+            <i class="fas fa-times mr-2"></i>Clear
+        </a>
+    </form>
+</div>
+
+<!-- Products Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+    {% for product in page_obj %}
+    <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition">
+        {% if product.image %}
+            <img src="{{ product.image.url }}" alt="{{ product.name }}" class="w-full h-48 object-cover">
+        {% else %}
+            <div class="w-full h-48 bg-gray-200 flex items-center justify-center">
+                <i class="fas fa-image text-gray-400 text-4xl"></i>
+            </div>
+        {% endif %}
+        
+        <div class="p-4">
+            <div class="flex items-start justify-between mb-2">
+                <h3 class="text-lg font-medium text-gray-900 truncate">{{ product.name }}</h3>
+                {% if product.available %}
+                    <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">In Stock</span>
+                {% else %}
+                    <span class="px-2 py-1 text-xs rounded-full bg-red-100 text-red-800">Out of Stock</span>
+                {% endif %}
+            </div>
+            
+            <p class="text-sm text-gray-500 mb-2">{{ product.category.name }}</p>
+            <p class="text-sm text-gray-600 mb-3 line-clamp-2">{{ product.description|truncatewords:10 }}</p>
+            
+            <div class="flex items-center justify-between mb-3">
+                <span class="text-xl font-bold text-gray-900">${{ product.price|floatformat:2 }}</span>
+                <span class="text-sm text-gray-500">{{ product.stock }} units</span>
+            </div>
+            
+            <div class="flex justify-between space-x-2">
+                <a href="{% url 'custom_admin:edit_product' product.id %}" class="flex-1 bg-indigo-600 text-white px-3 py-2 rounded-md hover:bg-indigo-700 transition text-center text-sm">
+                    <i class="fas fa-edit"></i> Edit
+                </a>
+                <a href="{% url 'custom_admin:delete_product' product.id %}" class="flex-1 bg-red-600 text-white px-3 py-2 rounded-md hover:bg-red-700 transition text-center text-sm">
+                    <i class="fas fa-trash"></i> Delete
+                </a>
+            </div>
+            
+            <div class="text-xs text-gray-500 mt-3">
+                Created: {{ product.created_at|date:"M d, Y" }}
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-span-full text-center py-12">
+        <i class="fas fa-box-open text-gray-400 text-5xl mb-4"></i>
+        <p class="text-gray-500 text-lg">No products found.</p>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Pagination -->
+{% if page_obj.has_other_pages %}
+<div class="bg-white px-4 py-3 border-t border-gray-200 sm:px-6 mt-6 rounded-lg shadow">
+    <div class="flex items-center justify-between">
+        <div class="flex-1 flex justify-between sm:hidden">
+            <a href="?page={{ page_obj.previous_page_number }}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" 
+               class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                Previous
+            </a>
+            <a href="?page={{ page_obj.next_page_number }}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" 
+               class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                Next
+            </a>
+        </div>
+        <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+            <div>
+                <p class="text-sm text-gray-700">
+                    Showing 
+                    <span class="font-medium">{{ page_obj.start_index }}</span> 
+                    to 
+                    <span class="font-medium">{{ page_obj.end_index }}</span> 
+                    of 
+                    <span class="font-medium">{{ page_obj.paginator.count }}</span> 
+                    results
+                </p>
+            </div>
+            <div>
+                <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                    {% if page_obj.has_previous %}
+                        <a href="?page={{ page_obj.previous_page_number }}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" 
+                           class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                            Previous
+                        </a>
+                    {% endif %}
+                    
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-indigo-50 text-sm font-medium text-indigo-600">
+                                {{ num }}
+                            </span>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <a href="?page={{ num }}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" 
+                               class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                {{ num }}
+                            </a>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" 
+                           class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                            Next
+                        </a>
+                    {% endif %}
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<script>
+function toggleProductForm() {
+    const form = document.getElementById('productForm');
+    form.classList.toggle('hidden');
+}
+</script>
+
+<style>
+#productForm input[type="text"],
+#productForm textarea,
+#productForm select,
+#productForm input[type="number"],
+#productForm input[type="file"] {
+    width: 100%;
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+}
+
+#productForm input[type="text"]:focus,
+#productForm textarea:focus,
+#productForm select:focus,
+#productForm input[type="number"]:focus {
+    outline: none;
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+#productForm input[type="checkbox"] {
+    width: 1rem;
+    height: 1rem;
+    color: #6366f1;
+}
+</style>
+{% endblock %}

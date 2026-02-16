@@ -1,0 +1,259 @@
+{% extends 'custom_admin/base.html' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<!-- Statistics Cards -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="stat-card text-white p-6 rounded-xl shadow-lg">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-white/80 text-sm">Total Revenue</p>
+                <p class="text-3xl font-bold">${{ total_revenue|floatformat:2 }}</p>
+                <p class="text-sm mt-2">
+                    {% if revenue_growth > 0 %}
+                        <i class="fas fa-arrow-up"></i> {{ revenue_growth }}% from last month
+                    {% else %}
+                        <i class="fas fa-arrow-down"></i> {{ revenue_growth|slice:"1:" }}% from last month
+                    {% endif %}
+                </p>
+            </div>
+            <div class="text-4xl opacity-80">
+                <i class="fas fa-dollar-sign"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="stat-card-2 text-white p-6 rounded-xl shadow-lg">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-white/80 text-sm">Total Orders</p>
+                <p class="text-3xl font-bold">{{ total_orders }}</p>
+                <p class="text-sm mt-2">
+                    {% if order_growth > 0 %}
+                        <i class="fas fa-arrow-up"></i> {{ order_growth }}% from last month
+                    {% else %}
+                        <i class="fas fa-arrow-down"></i> {{ order_growth|slice:"1:" }}% from last month
+                    {% endif %}
+                </p>
+            </div>
+            <div class="text-4xl opacity-80">
+                <i class="fas fa-shopping-bag"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="stat-card-3 text-white p-6 rounded-xl shadow-lg">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-white/80 text-sm">Pending Orders</p>
+                <p class="text-3xl font-bold">{{ pending_orders }}</p>
+                <p class="text-sm mt-2">Awaiting processing</p>
+            </div>
+            <div class="text-4xl opacity-80">
+                <i class="fas fa-clock"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="stat-card-4 text-white p-6 rounded-xl shadow-lg">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-white/80 text-sm">Today's Revenue</p>
+                <p class="text-3xl font-bold">${{ today_revenue|floatformat:2 }}</p>
+                <p class="text-sm mt-2">{{ today_orders }} orders today</p>
+            </div>
+            <div class="text-4xl opacity-80">
+                <i class="fas fa-calendar-day"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<!-- Pending Orders, Recent Orders and Top Products -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Pending Orders -->
+    <div class="bg-white p-6 rounded-xl shadow-lg">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold">Pending Orders</h3>
+            <span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-medium">
+                {{ pending_orders }} pending
+            </span>
+        </div>
+        {% if pending_orders_list %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full">
+                <thead>
+                    <tr class="border-b">
+                        <th class="text-left py-2">Order ID</th>
+                        <th class="text-left py-2">Customer</th>
+                        <th class="text-left py-2">Total</th>
+                        <th class="text-left py-2">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in pending_orders_list %}
+                    <tr class="border-b hover:bg-gray-50">
+                        <td class="py-2">#{{ order.id }}</td>
+                        <td class="py-2">{{ order.user.email }}</td>
+                        <td class="py-2">${{ order.total_price|floatformat:2 }}</td>
+                        <td class="py-2">
+                            <div class="flex space-x-2">
+                                <a href="{% url 'custom_admin:order_detail' order.id %}" 
+                                   class="text-indigo-600 hover:text-indigo-800 text-sm">
+                                    <i class="fas fa-eye"></i> View
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-8">
+            <i class="fas fa-check-circle text-green-500 text-3xl mb-2"></i>
+            <p class="text-gray-500">No pending orders</p>
+        </div>
+        {% endif %}
+        <div class="mt-4">
+            <a href="{% url 'custom_admin:orders' %}?status=pending" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">
+                View All Pending Orders →
+            </a>
+        </div>
+    </div>
+    
+    <!-- Recent Orders -->
+    <div class="bg-white p-6 rounded-xl shadow-lg">
+        <h3 class="text-lg font-semibold mb-4">Recent Orders</h3>
+        <div class="overflow-x-auto">
+            <table class="min-w-full">
+                <thead>
+                    <tr class="border-b">
+                        <th class="text-left py-2">Order ID</th>
+                        <th class="text-left py-2">Customer</th>
+                        <th class="text-left py-2">Status</th>
+                        <th class="text-left py-2">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in recent_orders %}
+                    <tr class="border-b hover:bg-gray-50">
+                        <td class="py-2">#{{ order.id }}</td>
+                        <td class="py-2">{{ order.user.email }}</td>
+                        <td class="py-2">
+                            <span class="px-2 py-1 text-xs rounded-full
+                                {% if order.status == 'pending' %}bg-yellow-100 text-yellow-800
+                                {% elif order.status == 'processing' %}bg-blue-100 text-blue-800
+                                {% elif order.status == 'shipped' %}bg-purple-100 text-purple-800
+                                {% elif order.status == 'delivered' %}bg-green-100 text-green-800
+                                {% else %}bg-red-100 text-red-800{% endif %}">
+                                {{ order.get_status_display }}
+                            </span>
+                        </td>
+                        <td class="py-2">${{ order.total_price|floatformat:2 }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="mt-4">
+            <a href="{% url 'custom_admin:orders' %}" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">
+                View All Orders →
+            </a>
+        </div>
+    </div>
+    
+    <!-- Top Products -->
+    <div class="bg-white p-6 rounded-xl shadow-lg">
+        <h3 class="text-lg font-semibold mb-4">Top Selling Products</h3>
+        <div class="overflow-x-auto">
+            <table class="min-w-full">
+                <thead>
+                    <tr class="border-b">
+                        <th class="text-left py-2">Product</th>
+                        <th class="text-left py-2">Units Sold</th>
+                        <th class="text-left py-2">Revenue</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in top_products %}
+                    <tr class="border-b hover:bg-gray-50">
+                        <td class="py-2">{{ product.product__name }}</td>
+                        <td class="py-2">{{ product.total_sold }}</td>
+                        <td class="py-2 text-green-600 font-medium">${{ product.total_revenue|floatformat:2 }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+// Revenue Chart
+const monthlyTrendData = '{{ monthly_trend|escapejs }}';
+const monthlyTrend = JSON.parse(monthlyTrendData);
+const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+new Chart(revenueCtx, {
+    type: 'line',
+    data: {
+        labels: monthlyTrend.map(function(item) { return item.month; }),
+        datasets: [{
+            label: 'Monthly Revenue ($)',
+            data: monthlyTrend.map(function(item) { return item.revenue; }),
+            borderColor: 'rgb(99, 102, 241)',
+            backgroundColor: 'rgba(99, 102, 241, 0.1)',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.4
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    callback: function(value) {
+                        return '$' + value.toLocaleString();
+                    }
+                }
+            }
+        }
+    }
+});
+
+// Status Chart
+const statusData = JSON.parse('{{ order_status_counts|safe }}');
+const statusCtx = document.getElementById('statusChart').getContext('2d');
+new Chart(statusCtx, {
+    type: 'doughnut',
+    data: {
+        labels: statusData.map(function(item) { return item.status.charAt(0).toUpperCase() + item.status.slice(1); }),
+        datasets: [{
+            data: statusData.map(function(item) { return item.count; }),
+            backgroundColor: [
+                '#fbbf24',
+                '#60a5fa',
+                '#a78bfa',
+                '#34d399',
+                '#f87171'
+            ]
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

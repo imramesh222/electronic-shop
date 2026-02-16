@@ -40,33 +40,6 @@
             </div>
         </form>
         
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">Product Details</h5>
             </div>
-            <div class="card-body">
-                <table class="table">
-                    <tbody>
-                        <tr>
-                            <th>Brand</th>
-                            <td>{{ product.brand|default:"N/A" }}</td>
-                        </tr>
-                        <tr>
-                            <th>Model</th>
-                            <td>{{ product.model|default:"N/A" }}</td>
-                        </tr>
-                        <tr>
-                            <th>SKU</th>
-                            <td>{{ product.sku|default:"N/A" }}</td>
-                        </tr>
-                        <tr>
-                            <th>Stock</th>
-                            <td>{{ product.stock }} units</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
 </div>
 {% endblock %}

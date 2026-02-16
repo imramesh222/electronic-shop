@@ -28,9 +28,12 @@
                         <td>${{ order.total_price }}</td>
                         <td>
                             <span class="badge 
-                                {% if order.status == 'completed' %}bg-success
+                                {% if order.status == 'delivered' %}bg-success
+                                {% elif order.status == 'shipped' %}bg-info
+                                {% elif order.status == 'pending' %}bg-warning
                                 {% elif order.status == 'cancelled' %}bg-danger
-                                {% else %}bg-warning{% endif %}">
+                                {% elif order.status == 'processing' %}bg-primary
+                                {% endif %}">
                                 {{ order.get_status_display }}
                             </span>
                         </td>

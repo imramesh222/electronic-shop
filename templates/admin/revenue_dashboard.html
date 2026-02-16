@@ -1,0 +1,298 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+.dashboard-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border-left: 4px solid #007cba;
+}
+
+.stat-card h3 {
+    margin: 0 0 10px 0;
+    color: #333;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.stat-card .value {
+    font-size: 28px;
+    font-weight: bold;
+    color: #007cba;
+    margin-bottom: 5px;
+}
+
+.stat-card .growth {
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.growth.positive {
+    color: #4caf50;
+}
+
+.growth.negative {
+    color: #f44336;
+}
+
+.chart-container {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 30px;
+}
+
+.table-container {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 30px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th, td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+
+th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    color: #333;
+}
+
+tr:hover {
+    background-color: #f8f9fa;
+}
+
+.status-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: bold;
+    color: white;
+}
+
+.status-pending { background-color: #ff9800; }
+.status-processing { background-color: #2196f3; }
+.status-shipped { background-color: #9c27b0; }
+.status-delivered { background-color: #4caf50; }
+.status-cancelled { background-color: #f44336; }
+
+.revenue-positive { color: #4caf50; font-weight: bold; }
+.revenue-negative { color: #f44336; }
+
+@media (max-width: 768px) {
+    .dashboard-container {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+    <h1>Revenue Dashboard</h1>
+    
+    <!-- Statistics Cards -->
+    <div class="dashboard-container">
+        <div class="stat-card">
+            <h3>Total Revenue</h3>
+            <div class="value">${{ total_revenue|floatformat:2 }}</div>
+            <div class="growth {% if revenue_growth > 0 %}positive{% else %}negative{% endif %}">
+                {% if revenue_growth > 0 %}↑{% else %}↓{% endif %} {{ revenue_growth|abs }}% from last month
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <h3>Total Orders</h3>
+            <div class="value">{{ total_orders }}</div>
+            <div class="growth {% if order_growth > 0 %}positive{% else %}negative{% endif %}">
+                {% if order_growth > 0 %}↑{% else %}↓{% endif %} {{ order_growth|abs }}% from last month
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <h3>Pending Orders</h3>
+            <div class="value">{{ pending_orders }}</div>
+            <div style="color: #ff9800; font-size: 12px;">Awaiting processing</div>
+        </div>
+        
+        <div class="stat-card">
+            <h3>Processing Orders</h3>
+            <div class="value">{{ processing_orders }}</div>
+            <div style="color: #2196f3; font-size: 12px;">Currently being processed</div>
+        </div>
+        
+        <div class="stat-card">
+            <h3>Today's Revenue</h3>
+            <div class="value">${{ today_revenue|floatformat:2 }}</div>
+            <div style="color: #666; font-size: 12px;">{{ today_orders }} orders today</div>
+        </div>
+        
+        <div class="stat-card">
+            <h3>This Month</h3>
+            <div class="value">${{ this_month_revenue|floatformat:2 }}</div>
+            <div style="color: #666; font-size: 12px;">{{ this_month_orders }} orders</div>
+        </div>
+    </div>
+    
+    <!-- Monthly Trend Chart -->
+    <div class="chart-container">
+        <h2>Revenue Trend (Last 12 Months)</h2>
+        <canvas id="revenueChart" width="400" height="100"></canvas>
+    </div>
+    
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+        <!-- Top Products -->
+        <div class="table-container">
+            <h2>Top Selling Products</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Units Sold</th>
+                        <th>Revenue</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in top_products %}
+                    <tr>
+                        <td>{{ product.product__name }}</td>
+                        <td>{{ product.total_sold }}</td>
+                        <td class="revenue-positive">${{ product.total_revenue|floatformat:2 }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Category Performance -->
+        <div class="table-container">
+            <h2>Category Performance</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Category</th>
+                        <th>Units Sold</th>
+                        <th>Revenue</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for category in category_performance %}
+                    <tr>
+                        <td>{{ category.product__category__name }}</td>
+                        <td>{{ category.total_sold }}</td>
+                        <td class="revenue-positive">${{ category.total_revenue|floatformat:2 }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Order Status Breakdown -->
+    <div class="table-container">
+        <h2>Order Status Breakdown</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Status</th>
+                    <th>Count</th>
+                    <th>Percentage</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for status in order_status_counts %}
+                <tr>
+                    <td><span class="status-badge status-{{ status.status }}">{{ status.status|title }}</span></td>
+                    <td>{{ status.count }}</td>
+                    <td>{% widthratio status.count total_orders 100 %}%</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Monthly Trend Chart
+const monthlyTrendData = '{{ monthly_trend|escapejs }}';
+const monthlyTrend = JSON.parse(monthlyTrendData);
+const ctx = document.getElementById('revenueChart').getContext('2d');
+const revenueChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: monthlyTrend.map(function(item) { return item.month; }),
+        datasets: [{
+            label: 'Monthly Revenue ($)',
+            data: monthlyTrend.map(function(item) { return item.revenue; }),
+            borderColor: '#007cba',
+            backgroundColor: 'rgba(0, 124, 186, 0.1)',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.4
+        }, {
+            label: 'Monthly Orders',
+            data: monthlyTrend.map(function(item) { return item.orders; }),
+            borderColor: '#4caf50',
+            backgroundColor: 'rgba(76, 175, 80, 0.1)',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.4,
+            yAxisID: 'y1'
+        }]
+    },
+    options: {
+        responsive: true,
+        interaction: {
+            mode: 'index',
+            intersect: false,
+        },
+        scales: {
+            y: {
+                type: 'linear',
+                display: true,
+                position: 'left',
+                title: {
+                    display: true,
+                    text: 'Revenue ($)'
+                }
+            },
+            y1: {
+                type: 'linear',
+                display: true,
+                position: 'right',
+                title: {
+                    display: true,
+                    text: 'Orders'
+                },
+                grid: {
+                    drawOnChartArea: false,
+                }
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

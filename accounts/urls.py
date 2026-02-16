@@ -19,7 +19,7 @@ urlpatterns = [
     path('api/register/', views.RegisterView.as_view(), name='api_register'),
     
     # User Profile
-    path('profile/', views.UserProfileView.as_view(), name='profile'),
+    path('profile/', views.UserHTMLProfileView.as_view(), name='profile'),
     path('change-password/', views.ChangePasswordView.as_view(), name='change_password'),
     
     # Authentication Views

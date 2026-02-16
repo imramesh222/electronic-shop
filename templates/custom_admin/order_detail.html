@@ -1,0 +1,198 @@
+{% extends 'custom_admin/base.html' %}
+
+{% block page_title %}Order #{{ order.id }}{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Order Details -->
+    <div class="lg:col-span-2">
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <h3 class="text-lg font-semibold mb-4">Order Information</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <p class="text-sm text-gray-500">Order ID</p>
+                    <p class="font-medium">#{{ order.id }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Customer</p>
+                    <p class="font-medium">{{ order.user.email }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Status</p>
+                    <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full
+                        {% if order.status == 'pending' %}bg-yellow-100 text-yellow-800
+                        {% elif order.status == 'processing' %}bg-blue-100 text-blue-800
+                        {% elif order.status == 'shipped' %}bg-purple-100 text-purple-800
+                        {% elif order.status == 'delivered' %}bg-green-100 text-green-800
+                        {% else %}bg-red-100 text-red-800{% endif %}">
+                        {{ order.get_status_display }}
+                    </span>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Payment Status</p>
+                    {% if order.is_paid %}
+                        <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                            Paid
+                        </span>
+                    {% else %}
+                        <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                            Unpaid
+                        </span>
+                    {% endif %}
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Order Date</p>
+                    <p class="font-medium">{{ order.created_at|date:"M d, Y H:i" }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Last Updated</p>
+                    <p class="font-medium">{{ order.updated_at|date:"M d, Y H:i" }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Order Items -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold mb-4">Order Items</h3>
+            <div class="overflow-x-auto">
+                <table class="min-w-full">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Quantity</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for item in order.items.all %}
+                        <tr>
+                            <td class="px-4 py-4">
+                                <div class="flex items-center">
+                                    {% if item.product.image %}
+                                        <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}" class="w-12 h-12 object-cover rounded mr-3">
+                                    {% endif %}
+                                    <div>
+                                        <p class="font-medium text-gray-900">{{ item.product.name }}</p>
+                                        <p class="text-sm text-gray-500">{{ item.product.category.name }}</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-4 py-4 text-sm text-gray-900">${{ item.price|floatformat:2 }}</td>
+                            <td class="px-4 py-4 text-sm text-gray-900">{{ item.quantity }}</td>
+                            <td class="px-4 py-4 text-sm font-medium text-gray-900">${{ item.total_price|floatformat:2 }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr class="bg-gray-50">
+                            <td colspan="3" class="px-4 py-3 text-right font-medium">Total:</td>
+                            <td class="px-4 py-3 font-bold text-lg">${{ order.total_price|floatformat:2 }}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions & Shipping -->
+    <div class="lg:col-span-1">
+        <!-- Quick Actions -->
+        {% if order.status == 'pending' %}
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <h3 class="text-lg font-semibold mb-4">Quick Actions</h3>
+            <div class="space-y-3">
+                <form method="POST" class="inline">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="accept">
+                    <button type="submit" class="w-full bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition">
+                        <i class="fas fa-check mr-2"></i>Accept Order
+                    </button>
+                </form>
+                <form method="POST" class="inline">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="reject">
+                    <button type="submit" class="w-full bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition">
+                        <i class="fas fa-times mr-2"></i>Reject Order
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Payment Status -->
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <h3 class="text-lg font-semibold mb-4">Payment Status</h3>
+            <div class="space-y-3">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-500">Current Status</p>
+                        {% if order.is_paid %}
+                            <span class="px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                <i class="fas fa-check-circle mr-1"></i> Paid
+                            </span>
+                        {% else %}
+                            <span class="px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                <i class="fas fa-times-circle mr-1"></i> Unpaid
+                            </span>
+                        {% endif %}
+                    </div>
+                    <div class="text-right">
+                        <p class="text-sm text-gray-500">Amount</p>
+                        <p class="text-lg font-bold text-gray-900">${{ order.total_price|floatformat:2 }}</p>
+                    </div>
+                </div>
+                
+                {% if order.status != 'cancelled' %}
+                <div class="pt-3 border-t">
+                    <p class="text-sm text-gray-600 mb-2">Update Payment Status:</p>
+                    <div class="flex space-x-2">
+                        {% if not order.is_paid %}
+                        <form method="POST" class="inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="mark_paid">
+                            <button type="submit" class="bg-green-600 text-white px-3 py-2 rounded-md hover:bg-green-700 transition text-sm">
+                                <i class="fas fa-check mr-1"></i>Mark as Paid
+                            </button>
+                        </form>
+                        {% endif %}
+                        {% if order.is_paid %}
+                        <form method="POST" class="inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="mark_unpaid">
+                            <button type="submit" class="bg-orange-600 text-white px-3 py-2 rounded-md hover:bg-orange-700 transition text-sm">
+                                <i class="fas fa-times mr-1"></i>Mark as Unpaid
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <h3 class="text-lg font-semibold mb-4">Update Status</h3>
+            <form method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="update_status">
+                <select name="status" class="w-full border border-gray-300 rounded-md px-3 py-2 mb-3 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    {% for status_value, status_label in status_choices %}
+                        <option value="{{ status_value }}" {% if order.status == status_value %}selected{% endif %}>
+                            {{ status_label }}
+                        </option>
+                    {% endfor %}
+                </select>
+                <button type="submit" class="w-full bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition">
+                    <i class="fas fa-save mr-2"></i>Update Status
+                </button>
+            </form>
+        </div>
+
+        <!-- Shipping Address -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold mb-4">Shipping Address</h3>
+            <p class="text-gray-700 whitespace-pre-line">{{ order.shipping_address }}</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

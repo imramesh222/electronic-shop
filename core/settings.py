@@ -46,6 +46,8 @@ INSTALLED_APPS = [
     'accounts.apps.AccountsConfig',
     'products',
     'website',
+    'dashboard.apps.DashboardConfig',
+    'custom_admin.apps.CustomAdminConfig',
 ]
 
 MIDDLEWARE = [

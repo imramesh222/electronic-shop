@@ -5,105 +5,115 @@
 
 {% block content %}
 <div class="container py-4">
-  <!-- Header -->
-  <div class="mb-3 d-flex justify-content-between align-items-center">
-    <h3>Order #{{ order.pk }}</h3>
-    <span class="badge {% if order.status == 'completed' %}bg-success{% elif order.status == 'cancelled' %}bg-danger{% else %}bg-warning{% endif %}">
-      {{ order.get_status_display }}
-    </span>
-  </div>
+  <!-- Single Order Card -->
+  <div class="card">
+    <!-- Card Header -->
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h4 class="mb-0">Order #{{ order.pk }}</h4>
+      <span class="badge {% if order.status == 'delivered' %}bg-success{% elif order.status == 'shipped' %}bg-info{% elif order.status == 'pending' %}bg-warning{% elif order.status == 'cancelled' %}bg-danger{% elif order.status == 'processing' %}bg-primary{% endif %}">
+        {{ order.get_status_display }}
+      </span>
+    </div>
 
-  <div class="row">
-    <!-- Left: Items / Shipping / Payment -->
-    <div class="col-lg-8">
-      <!-- Items -->
-      <div class="card mb-3">
-        <div class="card-header"><strong>Items</strong></div>
-        <div class="card-body p-2">
-          <table class="table table-sm mb-0">
-            <thead>
-              <tr><th>Product</th><th>Qty</th><th class="text-end">Price</th><th class="text-end">Total</th></tr>
-            </thead>
-            <tbody>
-              {% for item in order.items.all %}
-              <tr>
-                <td>{{ item.product.name }}</td>
-                <td>{{ item.quantity }}</td>
-                <td class="text-end">${{ item.price|floatformat:2 }}</td>
-                <td class="text-end">${{ item.total_price|floatformat:2 }}</td>
-              </tr>
-              {% empty %}
-              <tr><td colspan="4" class="text-muted">No items</td></tr>
-              {% endfor %}
-            </tbody>
-          </table>
+    <!-- Card Body -->
+    <div class="card-body">
+      <div class="row">
+        <!-- Left Column: Items and Shipping -->
+        <div class="col-lg-8">
+          <!-- Items Section -->
+          <div class="mb-4">
+            <h5 class="mb-3"><i class="fas fa-box me-2"></i>Order Items</h5>
+            <div class="table-responsive">
+              <table class="table table-sm">
+                <thead class="table-light">
+                  <tr>
+                    <th>Product</th>
+                    <th class="text-center">Qty</th>
+                    <th class="text-end">Price</th>
+                    <th class="text-end">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for item in order.items.all %}
+                  <tr>
+                    <td>{{ item.product.name }}</td>
+                    <td class="text-center">{{ item.quantity }}</td>
+                    <td class="text-end">${{ item.price|floatformat:2 }}</td>
+                    <td class="text-end">${{ item.total_price|floatformat:2 }}</td>
+                  </tr>
+                  {% empty %}
+                  <tr>
+                    <td colspan="4" class="text-muted text-center">No items found</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Shipping Section -->
+          <div class="mb-4">
+            <h5 class="mb-3"><i class="fas fa-truck me-2"></i>Shipping Information</h5>
+            <div class="bg-light p-3 rounded">
+              <address class="mb-0">
+                {{ order.shipping_address|linebreaks }}
+              </address>
+            </div>
+          </div>
         </div>
-      </div>
 
-      <!-- Shipping -->
-      <div class="card mb-3">
-        <div class="card-header"><strong>Shipping</strong></div>
-        <div class="card-body">
-          <address class="mb-0">
-            {{ order.shipping_address.first_name }} {{ order.shipping_address.last_name }}<br>
-            {{ order.shipping_address.address }}<br>
-            {{ order.shipping_address.city }} {{ order.shipping_address.state }} {{ order.shipping_address.zip_code }}<br>
-            {{ order.shipping_address.country }}
-          </address>
-          {% if order.tracking_number %}
-          <p class="mt-2 mb-0">Tracking: <strong>{{ order.tracking_number }}</strong>
-            {% if order.tracking_url %}<a href="{{ order.tracking_url }}" target="_blank" class="ms-2">Track</a>{% endif %}
-          </p>
-          {% endif %}
-        </div>
-      </div>
+        <!-- Right Column: Actions and Summary -->
+        <div class="col-lg-4">
+          <!-- Actions Section -->
+          <div class="mb-4">
+            <h5 class="mb-3"><i class="fas fa-cog me-2"></i>Actions</h5>
+            <div class="d-grid gap-2">
+              {% if order.status == 'processing' %}
+              <form action="{% url 'orders:order_cancel' order.pk %}" method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger">Cancel Order</button>
+              </form>
+              {% endif %}
 
-      <!-- Payment -->
-      <div class="card mb-3">
-        <div class="card-header"><strong>Payment</strong></div>
-        <div class="card-body">
-          <p class="mb-1">Method: {{ order.payment.get_payment_method_display }}</p>
-          <p class="mb-0 text-muted">Transaction: {{ order.payment.transaction_id }}</p>
+              {% if order.status == 'delivered' and not order.return_requested %}
+              <form action="{% url 'orders:order_return' order.pk %}" method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-secondary">Request Return</button>
+              </form>
+              {% endif %}
+
+              <a href="{% url 'orders:invoice' order.pk %}" target="_blank" class="btn btn-outline-primary">View Invoice</a>
+              <a href="{% url 'products:product_list' %}" class="btn btn-primary">Continue Shopping</a>
+              <a href="{% url 'website:home' %}" class="btn btn-secondary">Return to Home</a>
+            </div>
+          </div>
+
+          <!-- Summary Section -->
+          <div>
+            <h5 class="mb-3"><i class="fas fa-receipt me-2"></i>Order Summary</h5>
+            <div class="bg-light p-3 rounded">
+              <div class="d-flex justify-content-between mb-2">
+                <span>Subtotal:</span>
+                <span>${{ order.total_price|floatformat:2 }}</span>
+              </div>
+              <div class="d-flex justify-content-between mb-2">
+                <span>Shipping:</span>
+                <span class="text-success">Free</span>
+              </div>
+              <hr class="my-2">
+              <div class="d-flex justify-content-between fw-bold">
+                <span>Total:</span>
+                <span class="text-primary">${{ order.total_price|floatformat:2 }}</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Right: Actions / Summary -->
-    <div class="col-lg-4">
-      <!-- Actions -->
-      <div class="card mb-3">
-        <div class="card-header"><strong>Actions</strong></div>
-        <div class="card-body">
-          {% if order.status == 'processing' %}
-          <form action="{% url 'orders:order_cancel' order.pk %}" method="post" class="mb-2">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-danger w-100">Cancel Order</button>
-          </form>
-          {% endif %}
-
-          {% if order.status == 'delivered' and not order.return_requested %}
-          <form action="{% url 'orders:order_return' order.pk %}" method="post" class="mb-2">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-secondary w-100">Request Return</button>
-          </form>
-          {% endif %}
-
-          <a href="{% url 'orders:invoice' order.pk %}" target="_blank" class="btn btn-outline-primary w-100 mb-2">View Invoice</a>
-          <a href="{% url 'products:product_list' %}" class="btn btn-primary w-100">Continue Shopping</a>
-        </div>
-      </div>
-
-      <!-- Summary -->
-      <div class="card">
-        <div class="card-header"><strong>Summary</strong></div>
-        <div class="card-body">
-          <div class="d-flex justify-content-between"><span>Subtotal</span><span>${{ order.subtotal|floatformat:2 }}</span></div>
-          <div class="d-flex justify-content-between"><span>Shipping</span><span>{% if order.shipping_cost > 0 %}${{ order.shipping_cost|floatformat:2 }}{% else %}Free{% endif %}</span></div>
-          <div class="d-flex justify-content-between"><span>Tax</span><span>${{ order.tax|floatformat:2 }}</span></div>
-          <hr>
-          <div class="d-flex justify-content-between fw-bold"><span>Total</span><span>${{ order.total_price|floatformat:2 }}</span></div>
-        </div>
-      </div>
+    <!-- Card Footer -->
+    <div class="card-footer text-muted">
+      <small>Order placed on {{ order.created_at|date:"F d, Y" }} at {{ order.created_at|date:"g:i A" }}</small>
     </div>
   </div>
 </div>

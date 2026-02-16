@@ -15,7 +15,13 @@ class HomeView(LoginRequiredMixin, TemplateView):
         if self.request.user.is_authenticated:
             context['featured_products'] = Product.objects.filter(available=True)[:8]
             context['new_arrivals'] = Product.objects.filter(available=True).order_by('-created_at')[:8]
-            context['categories'] = Category.objects.all()[:6]
+            # Add categories with default icons
+            categories = list(Category.objects.all()[:6])
+            default_icons = ['fas fa-laptop', 'fas fa-mobile-alt', 'fas fa-headphones', 'fas fa-camera', 'fas fa-tablet-alt', 'fas fa-desktop']
+            for i, category in enumerate(categories):
+                if not category.icon:
+                    category.icon = default_icons[i % len(default_icons)]
+            context['categories'] = categories
         return context
         
     def dispatch(self, request, *args, **kwargs):

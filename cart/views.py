@@ -142,20 +142,32 @@ def cart_remove(request, product_id):
 
 
 
-
 @login_required
 def cart_update(request, item_id):
     """
-    Accepts POST with 'quantity'. If quantity <= 0, remove the item;
-    otherwise update quantity. Redirects back to cart_detail.
+    Accepts POST with 'quantity'. If quantity <= 0, remove item;
+    otherwise update quantity. Works with session-based cart.
     """
     if request.method == 'POST':
         try:
             quantity = int(request.POST.get('quantity', 1))
         except (TypeError, ValueError):
             quantity = 1
-        item = get_object_or_404(CartItem, id=item_id, cart__user=request.user)
-        if quantity <= 0:
-            item.delete()
+        
+        cart = Cart(request)
+        
+        # Convert item_id to string for session key lookup
+        product_id = str(item_id)
+        
+        if product_id in cart.cart:
+            if quantity <= 0:
+                del cart.cart[product_id]
+                messages.success(request, "Item removed from cart")
+            else:
+                cart.cart[product_id]['quantity'] = quantity
+                messages.success(request, "Cart updated successfully")
+            cart.save()
         else:
-            item.quantity = quantity
+            messages.error(request, "Item not found in cart")
+    
+    return redirect('cart:cart_detail')
